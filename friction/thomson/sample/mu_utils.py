@@ -10,7 +10,21 @@ def mean_edge_l_over_sigma_2d(
     exclude_core: bool = True,
     core_tol: float = 1e-12,
 ) -> tuple[float, np.ndarray]:
-    """Mean edge spacing-to-diameter ratio for a 2D GA clump."""
+    """Mean edge spacing-to-diameter ratio for a 2D GA clump.
+
+    Surface asperities are ordered by polar angle around the clump COM.
+    Each edge connects consecutive asperities (with wrap-around). For an
+    edge between asperities ``i`` and ``j``:
+
+    * spacing ``ell = |pos_p_i - pos_p_j|``
+    * mean diameter ``sigma = (2 rad_i + 2 rad_j) / 2 = rad_i + rad_j``
+    * ratio ``ell / sigma``
+
+    When ``n_surface`` is given, only the first ``n_surface`` spheres are
+    used (surface asperities in :func:`create_ga_state` solid-clump builds).
+    Otherwise, when ``exclude_core`` is True, spheres at the origin are
+    dropped before ordering.
+    """
     pos_p = np.asarray(pos_p, dtype=float)
     rad = np.asarray(rad, dtype=float)
     if pos_p.ndim != 2 or pos_p.shape[1] != 2:
@@ -44,12 +58,6 @@ def mean_edge_l_over_sigma_2d(
     mean_diameter = rad + rad[next_idx]
     ratios = spacing / mean_diameter
     return float(np.mean(ratios)), ratios
-
-
-def l_over_sigma_from_mu_eff_2d(mu_eff: float | np.ndarray) -> np.ndarray:
-    """Ideal uniform-asperity ``ell/sigma`` for a target effective friction."""
-    mu_eff = np.asarray(mu_eff, dtype=float)
-    return 2 * mu_eff / np.sqrt(1 + mu_eff**2)
 
 
 def calc_mu_eff_2d(vertex_radius, outer_radius, num_vertices):

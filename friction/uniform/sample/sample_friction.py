@@ -7,7 +7,12 @@ from pathlib import Path
 
 from jaxdem.utils.particle_creation import create_ga_state
 from jaxdem.utils.surface_properties import compute_surface_properties
-from mu_utils import find_num_vertices_for_target_mu_eff_2d, get_closest_vertex_radius_for_mu_eff_2d
+from mu_utils import (
+    find_num_vertices_for_target_mu_eff_2d,
+    get_closest_vertex_radius_for_mu_eff_2d,
+    l_over_sigma_from_mu_eff_2d,
+    mean_edge_l_over_sigma_2d,
+)
 
 if __name__ == "__main__":
     mu_eff = float(sys.argv[1])
@@ -77,6 +82,14 @@ if __name__ == "__main__":
         "ll": (large, large, 2 * large_radius),
     }
 
+    small_pos_p = np.asarray(small.pos_p)
+    small_rad = np.asarray(small.rad)
+    _, edge_l_over_sigma = mean_edge_l_over_sigma_2d(
+        small_pos_p, small_rad, n_surface=small_nv
+    )
+    l_over_sigma = float(l_over_sigma_from_mu_eff_2d(mu_eff))
+    l_over_sigma_std = float(np.std(edge_l_over_sigma))
+
     distributions = {}
 
     for key, (central, tracer, diameter) in pairs.items():
@@ -91,4 +104,11 @@ if __name__ == "__main__":
         distributions[key] = np.asarray(result["mu"]).ravel()
 
     output_path = out_dir / f"mu-{mu_eff}.npz"
-    np.savez(output_path, **distributions)
+    np.savez(
+        output_path,
+        **distributions,
+        mu_eff=mu_eff,
+        l_over_sigma=l_over_sigma,
+        l_over_sigma_std=l_over_sigma_std,
+        edge_l_over_sigma=edge_l_over_sigma,
+    )
