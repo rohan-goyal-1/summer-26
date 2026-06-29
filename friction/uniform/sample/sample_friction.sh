@@ -14,7 +14,7 @@ module purge
 module load miniconda
 conda activate jaxdem311
 
-mus=(0.01 0.03 0.05 0.10 0.30 0.50 1.0)
+mus=(3.0 5.0 10.0)
 
 for mu in "${mus[@]}"; do
     echo "[$(date)] Starting mu=$mu"
