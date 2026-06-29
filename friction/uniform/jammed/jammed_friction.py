@@ -8,6 +8,51 @@ import sys
 import numpy as np
 from pathlib import Path
 
+
+def clump_outer_radii(state, n_clumps):
+    clump_id = np.asarray(state.clump_id)
+    pos_p = np.asarray(state.pos_p)
+    rad = np.asarray(state.rad)
+
+    return np.array([
+        np.max(
+            np.linalg.norm(pos_p[clump_id == i], axis=1)
+            + rad[clump_id == i]
+        )
+        for i in range(n_clumps)
+    ])
+
+
+def mean_coordination_by_type(contact_mask, small):
+    contact_mask = np.asarray(contact_mask, dtype=bool)
+    small = np.asarray(small, dtype=bool)
+    n_clumps = contact_mask.shape[0]
+
+    z_all = contact_mask.sum(axis=1).astype(float)
+    z_ss = np.zeros(n_clumps, dtype=float)
+    z_sl = np.zeros(n_clumps, dtype=float)
+    z_ll = np.zeros(n_clumps, dtype=float)
+
+    i, j = np.triu_indices(n_clumps, 1)
+    active = contact_mask[i, j]
+    i, j = i[active], j[active]
+
+    ss = small[i] & small[j]
+    sl = small[i] ^ small[j]
+    ll = ~small[i] & ~small[j]
+
+    for mask, counts in ((ss, z_ss), (sl, z_sl), (ll, z_ll)):
+        idx = np.concatenate([i[mask], j[mask]])
+        counts += np.bincount(idx, minlength=n_clumps).astype(float)
+
+    return {
+        "all": float(z_all.mean()),
+        "ss": float(z_ss.mean()),
+        "sl": float(z_sl.mean()),
+        "ll": float(z_ll.mean()),
+    }
+
+
 if __name__ == "__main__":
     mu_eff = float(sys.argv[1])
 
@@ -16,6 +61,7 @@ if __name__ == "__main__":
     out_dir.mkdir(parents=True, exist_ok=True)
 
     distributions = {"ss": [], "sl": [], "ll": [], "all": []}
+    z_c = {"all": [], "ss": [], "sl": [], "ll": []}
     completed_runs = []
 
     for run in range(19):
@@ -42,18 +88,7 @@ if __name__ == "__main__":
             max_neighbors=512,
         )
 
-        clump_id = np.asarray(state.clump_id)
-        pos_p = np.asarray(state.pos_p)
-        rad = np.asarray(state.rad)
-
-        outer_radius = np.array([
-            np.max(
-                np.linalg.norm(pos_p[clump_id == i], axis=1)
-                + rad[clump_id == i]
-            )
-            for i in range(mu.shape[0])
-        ])
-
+        outer_radius = clump_outer_radii(state, mu.shape[0])
         small = outer_radius < (
             outer_radius.min() + outer_radius.max()
         ) / 2
@@ -72,6 +107,10 @@ if __name__ == "__main__":
             values[active & ~small[i] & ~small[j]]
         )
         distributions["all"].append(values[active])
+
+        for key, value in mean_coordination_by_type(contacts, small).items():
+            z_c[key].append(value)
+
         completed_runs.append(run)
 
     if not completed_runs:
@@ -86,6 +125,7 @@ if __name__ == "__main__":
             key: np.concatenate(values)
             for key, values in distributions.items()
         },
+        **{f"z_c_{key}": np.asarray(values) for key, values in z_c.items()},
         runs=np.asarray(completed_runs),
     )
 
