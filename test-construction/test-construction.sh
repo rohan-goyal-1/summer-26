@@ -18,4 +18,4 @@ module purge
 module load miniconda
 conda activate jaxdem311
 
-python /home/rg2248/analysis/summer-26/test-construction/test-construction.py "$mu"
+python /home/rg2248/project/friction/summer-26/test-construction/test-construction.py "$mu"

@@ -19,7 +19,7 @@ mus=(0.01 0.03 0.05 0.10 0.30 0.50 1.0)
 for mu in "${mus[@]}"; do
     echo "[$(date)] Starting mu=$mu"
 
-    python /home/rg2248/analysis/summer-26/friction/thomson/jammed/jammed_friction.py "$mu"
+    python /home/rg2248/project/friction/summer-26/friction/thomson/jammed/jammed_friction.py "$mu"
 
     echo "[$(date)] Finished mu=$mu"
 done

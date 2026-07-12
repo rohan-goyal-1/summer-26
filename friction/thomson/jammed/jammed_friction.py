@@ -11,7 +11,7 @@ from pathlib import Path
 if __name__ == "__main__":
     mu_eff = float(sys.argv[1])
 
-    data_root = Path("/home/rg2248/palmer_scratch/data/summer-26/jam-thomson/n-500")
+    data_root = Path("/home/rg2248/project/friction/data/jam-thomson/n-500")
     out_dir = Path("/home/rg2248/project/friction/data/local-friction/thomson/jammed")
     out_dir.mkdir(parents=True, exist_ok=True)
 

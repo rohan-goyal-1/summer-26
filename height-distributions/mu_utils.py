@@ -2,6 +2,35 @@ from scipy.optimize import minimize_scalar, brentq
 import numpy as np
 
 
+def height_distribution_2d(
+    pos_p: np.ndarray,
+    rad: np.ndarray,
+    *,
+    n_angles: int = 10_000,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Sample the angular height distribution for a 2D clump.
+
+    Returns ``(angles, heights)`` where ``angles`` are uniformly spaced on
+    ``[0, 2 pi)`` and ``heights[i]`` is the COM-to-perimeter distance along
+    direction ``angles[i]`` (support function of the union of disks).
+    """
+    pos_p = np.asarray(pos_p, dtype=float)
+    rad = np.asarray(rad, dtype=float)
+    if pos_p.ndim != 2 or pos_p.shape[1] != 2:
+        raise ValueError(f"pos_p must have shape (N, 2); got {pos_p.shape}.")
+    if rad.shape != (pos_p.shape[0],):
+        raise ValueError(
+            f"rad must have shape ({pos_p.shape[0]},); got {rad.shape}."
+        )
+    if n_angles < 1:
+        raise ValueError(f"n_angles must be >= 1; got {n_angles}.")
+
+    angles = np.linspace(0.0, 2.0 * np.pi, n_angles, endpoint=False)
+    dirs = np.stack([np.cos(angles), np.sin(angles)], axis=-1)
+    heights = np.max(pos_p @ dirs.T + rad[:, None], axis=0)
+    return angles, heights
+
+
 def mean_height_stats_2d(
     pos_p: np.ndarray,
     rad: np.ndarray,
@@ -19,20 +48,15 @@ def mean_height_stats_2d(
     where ``pos_p`` is expressed in the COM frame. Also returns
     ``std(h(theta))`` and ``std(h(theta)^2)`` over uniformly sampled angles.
     """
-    pos_p = np.asarray(pos_p, dtype=float)
-    rad = np.asarray(rad, dtype=float)
-    if pos_p.ndim != 2 or pos_p.shape[1] != 2:
-        raise ValueError(f"pos_p must have shape (N, 2); got {pos_p.shape}.")
-    if rad.shape != (pos_p.shape[0],):
-        raise ValueError(
-            f"rad must have shape ({pos_p.shape[0]},); got {rad.shape}."
-        )
-    if n_angles < 1:
-        raise ValueError(f"n_angles must be >= 1; got {n_angles}.")
+    _, heights = height_distribution_2d(pos_p, rad, n_angles=n_angles)
+    return mean_height_stats_from_distribution(heights)
 
-    angles = np.linspace(0.0, 2.0 * np.pi, n_angles, endpoint=False)
-    dirs = np.stack([np.cos(angles), np.sin(angles)], axis=-1)
-    heights = np.max(pos_p @ dirs.T + rad[:, None], axis=0)
+
+def mean_height_stats_from_distribution(
+    heights: np.ndarray,
+) -> tuple[float, float, float, float]:
+    """Summary statistics for a precomputed angular height distribution."""
+    heights = np.asarray(heights, dtype=float)
     heights_sq = heights**2
     return (
         float(np.mean(heights)),

@@ -18,7 +18,7 @@ if __name__ == "__main__":
 
     rng = default_rng()
     n_clumps = 10
-    min_nv = 10
+    min_nv = 90
     rat_small = 0.5
 
     n_small = int(n_clumps * rat_small)
@@ -60,7 +60,7 @@ if __name__ == "__main__":
         seed=int(rng.integers(0, 2**31 - 1)),
     )
 
-    data_root = f'/home/rg2248/palmer_scratch/data/summer-26/test-construction/n-{n_clumps}/mu-{mu_eff}'
+    data_root = f'/home/rg2248/project/friction/data/test-construction/n-{n_clumps}/mu-{mu_eff}'
     makedirs(data_root, exist_ok=True)
     save(state, join(data_root, 'state.h5'))
     save(system, join(data_root, 'system.h5'))

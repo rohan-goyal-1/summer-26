@@ -14,6 +14,7 @@ from mu_utils import (
     find_num_vertices_for_target_mu_eff_2d,
     get_closest_vertex_radius_for_mu_eff_2d,
     mean_edge_l_over_sigma_2d,
+    mean_height_stats_2d,
 )
 
 
@@ -31,15 +32,15 @@ def isolate_clump(state: State, clump_id: int = 0) -> State:
 if __name__ == "__main__":
     mu_eff = float(sys.argv[1])
 
-    out_dir = Path("/home/rg2248/project/friction/data/local-friction/thomson/sample")
-    out_dir.mkdir(parents=True, exist_ok=True)
-
     seed = 0
     particle_radius = 0.5
-    min_nv = 20
+    min_nv = 90
     overlap_fraction = 1e-5
-    n_points = 5003
-    n_orientations = 5009
+    n_points = 2003
+    n_orientations = 2009
+
+    out_dir = Path(f"/home/rg2248/project/friction/data/local-friction/thomson/sample/n-{min_nv}")
+    out_dir.mkdir(parents=True, exist_ok=True)
 
     asperity_radius = get_closest_vertex_radius_for_mu_eff_2d(
         mu_eff, particle_radius, min_nv
@@ -79,6 +80,9 @@ if __name__ == "__main__":
     l_over_sigma, edge_l_over_sigma = mean_edge_l_over_sigma_2d(
         pos_p, rad, n_surface=nv
     )
+    mean_height, mean_height_sq, height_std, height_sq_std = mean_height_stats_2d(
+        pos_p, rad
+    )
     outer_radius = float(np.max(np.linalg.norm(pos_p, axis=-1) + rad))
     diameter = 2.0 * outer_radius
     target_overlap = overlap_fraction * diameter
@@ -102,6 +106,10 @@ if __name__ == "__main__":
         l_over_sigma=l_over_sigma,
         l_over_sigma_std=float(np.std(edge_l_over_sigma)),
         edge_l_over_sigma=edge_l_over_sigma,
+        mean_height=mean_height,
+        mean_height_sq=mean_height_sq,
+        height_std=height_std,
+        height_sq_std=height_sq_std,
         nv=nv,
         asperity_radius=asperity_radius,
         particle_radius=particle_radius,
