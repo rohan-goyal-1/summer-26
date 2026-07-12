@@ -34,7 +34,7 @@ if __name__ == "__main__":
     seed = int(rng.integers(0, 2**31 - 1))
 
     particle_radius = 0.5
-    nv = 600
+    nv = 1000
     n_angles = 100_000
 
     out_dir = Path(f"/home/rg2248/project/friction/data/height-distributions/thomson/n-{nv}")
